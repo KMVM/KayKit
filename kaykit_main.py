@@ -21,7 +21,7 @@ KayKitDefault()
 
 # KayKit 26 - Tools
 
-def KayHelp(commandname="", ):
+def KayHelp(commandname=""):
     
     # Defines the print function used to display information to the user
     
