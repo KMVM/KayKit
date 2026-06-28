@@ -1,11 +1,12 @@
 # KayKit 26 - by Kieran Morley
 
+# ________________________________________________________
+
 # Module Import
 import maya.cmds as cmds
 import maya.OpenMaya as om
 
 # Core Functions
-
 def KayKitDefault():
     # Resets default prefixes when called after module import
     def SetPrefixDefaults():
@@ -14,12 +15,10 @@ def KayKitDefault():
     SetPrefixDefaults()    
 
 # Module Import Call
-
 KayKitDefault()
 
-# ________________________________________________________
 
-# KayKit 26 - Tools
+# ________________________________________________________
 
 def KayHelp(commandname=""):
     
