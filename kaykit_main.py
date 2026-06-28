@@ -4,13 +4,28 @@
 import maya.cmds as cmds
 import maya.OpenMaya as om
 
-# KHelp Tool
+# Core Functions
+
+def KayKitDefault():
+    # Resets default prefixes when called after module import
+    def SetPrefixDefaults():
+        global RigPrefixDefaults
+        RigPrefixDefaults = {"skin":"skin_", "rig":"rig_", "fk":"fk_", "ik":"ik_", "ctrl":"ctrl_", "grp":"grp_"} 
+    SetPrefixDefaults()    
+
+# Module Import Call
+
+KayKitDefault()
+
+# ________________________________________________________
+
+# KayKit 26 - Tools
 
 def KayHelp(commandname="", ):
     
     # Defines the print function used to display information to the user
     
-    def KayHelpInfo(helpinfo_msg="A KayHelp function was called, please see the script editor output window for more information.", IsWarning=False):
+    def KayHelpInfo(helpinfo_msg="", IsWarning=False):
         print("KayKit26")
         if IsWarning == False:
             om.MGlobal.displayInfo(helpinfo_msg)
@@ -23,9 +38,12 @@ def KayHelp(commandname="", ):
     kayhelpdefault = "To get help on a KayKit command, format = KayHelp('commandname')"
     kayhelprs = "Returns a list containing the selection.\nVariables:\n - SpecificType (optional, expects string containing type to filter to)\n - ComplexHierarchy (optional, expects True or False, ensures all descendents are returned"
     kayhelpbrs = "Given a selected joint, builds a list of all descendents then constructs a set of rig joints that constrain the joint hierarchy\nVariables:\n - SkinSystem (optional, a specified list of skin joints, default behaviour uses selected top level joint)"
+    kayhelptj = "Given a target joint, generates a twist joint in the parent skeletal system that is autoweighted if a valid skincluster is attached to the joint system, before inserting a duplicate into a matching rig or skin joint hierarchy as needed."
+    kayhelpsp = "Sets a default prefix KayKit uses to identify types of systems. \nVariables:\n - Prefix (valid string inputs: skin, rig, fk, ik, ctrl, grp)\n - Replace (new prefix string to use, including _)"
+    kayhelpdss = "Defines a skeletal system from a joint named root with a matching prefix. This returns a list that can be used to make changes to the system. \nVariables:\n - Type (valid string inputs: skin, rig)"
     
     # Defines dictionary of help hints
-    kayhelpdoc = {"ReturnSelection":kayhelprs, "BindRigToSkin":kayhelpbrs} # Each valid command name should be assigned a hint text variable as its key pair
+    kayhelpdoc = {"ReturnSelection":kayhelprs, "BindRigToSkin":kayhelpbrs, "TwistJoint": kayhelptj, "SetPrefix":kayhelpsp, "DefineSkeletalSystem":kayhelpdss} # Each valid command name should be assigned a hint text variable as its key pair
     kayhelplist = kayhelpdoc.keys()
     kayhelpmsg = kayhelpdoc.get(commandname)
     kayhelpstring = ""
@@ -54,34 +72,98 @@ def KayHelp(commandname="", ):
             KayHelpInfo(kayhelpnull + f"\nValid command names:{kayhelpstring}", IsWarning=True)   
 
     return()
-        
 
-# KReturnSelection Tool
 
+# ________________________________________________________
+ 
+def SetPrefix(Prefix="", Replace=""):
+    if Prefix == "":
+        KayHelp("SetPrefix")  
+    elif Replace == "":
+        KayHelp("SetPrefix")       
+    else:
+        global RigPrefixDefaults
+        if RigPrefixDefaults.get(Prefix) != None:
+            RigPrefixDefaults[Prefix] = Replace
+        else:
+            om.MGlobal.displayError("Prefix reassignment failed, incorrect prefix type or replace data type?")   
+               
+# ________________________________________________________   
+                    
 def ReturnSelection(SpecificType="None", ComplexHierarchy=False):
+    
+# Gets relatives from a selected object and removes all shape nodes.
+
+    def IgnoreShapeRelatives(Relatives):
+        
+        FoundShapes = []
+        
+        if Relatives:
+            for item in Relatives:
+                if cmds.nodeType(item) != "transform":
+                    FoundShapes = FoundShapes + [item]
+                    
+            for item in FoundShapes:
+                Relatives.remove(item)
+                
+        return(FoundShapes)       
+
     if SpecificType == "None":
         Selection = cmds.ls(sl=True)
-        Relatives = cmds.listRelatives(Selection[0], ad=True)
+        Relatives = cmds.listRelatives(Selection[0], ad=True)   
+        Relatives.reverse()            
+            
     else:
         Selection = cmds.ls(sl=True, type=SpecificType)
+        
         Relatives = cmds.listRelatives(Selection[0], ad=True)
         for elem in Relatives:
-            ElemType = cmds.objectType(elem)
-            if ElemType == SpecificType:
-                print(ElemType)
-                pass
-            else:
+            elemtype = cmds.objectType(elem)
+            if elemtype != SpecificType:
                 Relatives.remove(elem)
                 
+    IgnoreShapeRelatives(Relatives)             
+
+    # Returns list based on complex hierarchy argument        
     if ComplexHierarchy == True:
-        return(Relatives + Selection)
+        if len(Selection) > 1:
+            om.MGlobal.displayWarning(f"Discarded multiple selections, '{Selection[0]}' is now the parent of returned hierarchy.")
+        Selection = Selection[:1] # Currently will only get the first selection's hierarchy in complex hierarchy mode
+        return(Selection + Relatives)
     else:
         return(Selection)          
+        
+# ________________________________________________________ 
 
+def DefineSkeletalSystem(Type="None"):
+    
+    # No User Input
+    
+    if Type == "None":
+        KayHelp("DefineSkeletalSystem")
+        return
+        
+    # User Selected Type To Define    
+    
+    sk_skinsystem = []
+    sk_rigsystem = []
+    
+    if Type == "skin":
+        root = cmds.ls(n=f"{SkinPrefix}_root")[0]
+        sk_skinsystem = [root] + cmds.listRelatives(type="joint", ad=True)
+    
+    elif Type == "rig":
+        root = cmds.ls(n=f"{RigPrefix}_root")[0]
+        sk_rigsystem = [root] + cmds.listRelatives(type="joint", ad=True)
+          
+    else:
+        om.MGlobalDisplayError("Invalid type of skeletal system specified for definition. Valid types: 'skin', 'rig'")
+    
+    return()            
 
-# Generate duplicate joint system from skin joints and build constraints
+# ________________________________________________________
 
-def BindRigToSkin(InputSkinSystem="None"):
+def BindRigToSkin(InputSkinSystem="None", SkinPrefix="skin_", RigPrefix = "rig_"):
     
     def GetSkinSystem():
         
@@ -89,11 +171,10 @@ def BindRigToSkin(InputSkinSystem="None"):
         if SelectedJoints:
             Relatives = cmds.listRelatives(SelectedJoints[0], ad=True)
             return(Relatives + SelectedJoints)
+        else:
+            return()    
         
     def CreateRigSystem(SkinSystem):
-        
-        SkinPrefix = "skin_"
-        RigPrefix = "rig_"
         
         DuplicateSkinSystem = cmds.duplicate(SkinSystem, st=True, rc=True)
         RigSystem = []
@@ -120,11 +201,24 @@ def BindRigToSkin(InputSkinSystem="None"):
     else:
         SkinSystem = InputSkinSystem     
     
-    CreateRigSystem(SkinSystem)
-        
-# Test Code
-if __name__ == "__main__":
+    if SkinSystem == False:
+        print("No valid input")
+    else:    
+        CreateRigSystem(SkinSystem)
+
+# ________________________________________________________
+    
+def TwistJoint():
     pass
+
+# ________________________________________________________
+        
+# Development Only
+if __name__ == "__main__":
+    DefineSkeletalSystem()
+    pass
+
+
 
 
 
