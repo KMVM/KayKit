@@ -6,7 +6,9 @@
 import maya.cmds as cmds
 import maya.OpenMaya as om
 
-# Core Functions
+
+# Define Module Default Functions
+
 def KayKitDefault():
     # Resets default prefixes when called after module import
     def SetPrefixDefaults():
@@ -14,9 +16,9 @@ def KayKitDefault():
         RigPrefixDefaults = {"skin":"skin_", "rig":"rig_", "fk":"fk_", "ik":"ik_", "ctrl":"ctrl_", "grp":"grp_"} 
     SetPrefixDefaults()    
 
-# Module Import Call
-KayKitDefault()
+# KayKit defaults, currently can also be used to reset the defaults and will run on each import.    
 
+KayKitDefault()
 
 # ________________________________________________________
 
@@ -89,7 +91,7 @@ def SetPrefix(Prefix="", Replace=""):
                
 # ________________________________________________________   
                     
-def ReturnSelection(SpecificType="None", ComplexHierarchy=False):
+def ReturnSelection(SpecificType="None", ComplexHierarchy=False, HierarchyDepth=1024, PrintReturn=False):
     
 # Gets relatives from a selected object and removes all shape nodes.
 
@@ -128,8 +130,13 @@ def ReturnSelection(SpecificType="None", ComplexHierarchy=False):
         if len(Selection) > 1:
             om.MGlobal.displayWarning(f"Discarded multiple selections, '{Selection[0]}' is now the parent of returned hierarchy.")
         Selection = Selection[:1] # Currently will only get the first selection's hierarchy in complex hierarchy mode
+        Relatives = Relatives[:HierarchyDepth]
+        if PrintReturn:
+            print(Selection+Relatives)
         return(Selection + Relatives)
     else:
+        if PrintReturn:
+            print(Selection)
         return(Selection)          
         
 # ________________________________________________________ 
@@ -214,11 +221,5 @@ def TwistJoint():
         
 # Development Only
 if __name__ == "__main__":
-    DefineSkeletalSystem()
+    #ReturnSelection(ComplexHierarchy=True, PrintReturn=True)
     pass
-
-
-
-
-
-  
