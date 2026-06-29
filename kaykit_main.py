@@ -91,7 +91,7 @@ def SetPrefix(Prefix="", Replace=""):
                
 # ________________________________________________________   
                     
-def ReturnSelection(SpecificType="None", ComplexHierarchy=False, HierarchyDepth=3, PrintReturn=False):
+def ReturnSelection(SpecificType="None", ComplexHierarchy=False, HierarchyDepth=512, PrintReturn=False):
     
 # Gets relatives from a selected object and removes all shape nodes.
 
@@ -215,7 +215,7 @@ def BindRigToSkin(InputSkinSystem="None", SkinPrefix="skin_", RigPrefix = "rig_"
 # ________________________________________________________
     
 def TwistJoint(EndJoint, StartJoint="" Autoweight=False, NoPropogation=False):
-    cmds.ls(sl=True, type="joint")
+    #cmds.ls(sl=True, type="joint")
     pass
 
 # ________________________________________________________
@@ -223,11 +223,5 @@ def TwistJoint(EndJoint, StartJoint="" Autoweight=False, NoPropogation=False):
 # Development Only
 if __name__ == "__main__":
     #ReturnSelection(ComplexHierarchy=True, PrintReturn=True)
-    KayHelp("TwistJoint")
+    #KayHelp("TwistJoint")
     pass
-
-
-
-
-
-  
