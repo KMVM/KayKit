@@ -37,11 +37,11 @@ def KayHelp(commandname=""):
     # Defines a list of variables storing hint text
     kayhelpnull = f"'{commandname}' not recognised, did you forget to wrap in quotations or remove the module name?"
     kayhelpdefault = "To get help on a KayKit command, format = KayHelp('commandname')"
-    kayhelprs = "Returns a list containing the selection.\nVariables:\n - SpecificType (optional, expects string containing type to filter to)\n - ComplexHierarchy (optional, expects True or False, ensures all descendents are returned"
-    kayhelpbrs = "Given a selected joint, builds a list of all descendents then constructs a set of rig joints that constrain the joint hierarchy\nVariables:\n - SkinSystem (optional, a specified list of skin joints, default behaviour uses selected top level joint)"
-    kayhelptj = "Given a target joint, generates a twist joint in the parent skeletal system that is autoweighted if a valid skincluster is attached to the joint system, before inserting a duplicate into a matching rig or skin joint hierarchy as needed."
-    kayhelpsp = "Sets a default prefix KayKit uses to identify types of systems. \nVariables:\n - Prefix (valid string inputs: skin, rig, fk, ik, ctrl, grp)\n - Replace (new prefix string to use, including _)"
-    kayhelpdss = "Defines a skeletal system from a joint named root with a matching prefix. This returns a list that can be used to make changes to the system. \nVariables:\n - Type (valid string inputs: skin, rig)"
+    kayhelprs = "Returns a list containing the selection.\nArguments:\n - SpecificType (optional, expects string containing type to filter to)\n - ComplexHierarchy (optional, expects True or False, ensures all descendents are returned)\n - HierarchyDepth (optional, integer value for how many relatives to return.\n - PrintReturn (optional, expects True or False, prints return of function to the script editor."
+    kayhelpbrs = "Given a selected joint, builds a list of all descendents then constructs a set of rig joints that constrain the joint hierarchy\nArguments:\n - SkinSystem (optional, a specified list of skin joints, default behaviour uses selected top level joint)"
+    kayhelptj = "Given a target joint, generates a twist joint in the parent skeletal system that is autoweighted if a valid skincluster is attached to the joint system, before inserting a duplicate into a matching rig or skin joint hierarchy as needed. \nArguments:\n - EndJoint (required, when no start joint is specified the first parent joint is used instead.)\n - StartJoint (If provided, will be the joint above the twist controller.)\n - AutoWeight (Should an autoweight be attempted if a skin cluster is found? Defaults to False.)\n - NoPropogation (Defaults to False, when enabled will ignore generating a matching rig or skin skeleton."
+    kayhelpsp = "Sets a default prefix KayKit uses to identify types of systems. \nArguments:\n - Prefix (valid string inputs: skin, rig, fk, ik, ctrl, grp)\n - Replace (new prefix string to use, including _)"
+    kayhelpdss = "Defines a skeletal system from a joint named root with a matching prefix. This returns a list that can be used to make changes to the system. \nArguments:\n - Type (valid string inputs: skin, rig)"
     
     # Defines dictionary of help hints
     kayhelpdoc = {"ReturnSelection":kayhelprs, "BindRigToSkin":kayhelpbrs, "TwistJoint": kayhelptj, "SetPrefix":kayhelpsp, "DefineSkeletalSystem":kayhelpdss} # Each valid command name should be assigned a hint text variable as its key pair
@@ -91,7 +91,7 @@ def SetPrefix(Prefix="", Replace=""):
                
 # ________________________________________________________   
                     
-def ReturnSelection(SpecificType="None", ComplexHierarchy=False, HierarchyDepth=1024, PrintReturn=False):
+def ReturnSelection(SpecificType="None", ComplexHierarchy=False, HierarchyDepth=3, PrintReturn=False):
     
 # Gets relatives from a selected object and removes all shape nodes.
 
@@ -214,7 +214,8 @@ def BindRigToSkin(InputSkinSystem="None", SkinPrefix="skin_", RigPrefix = "rig_"
 
 # ________________________________________________________
     
-def TwistJoint():
+def TwistJoint(EndJoint, StartJoint="" Autoweight=False, NoPropogation=False):
+    cmds.ls(sl=True, type="joint")
     pass
 
 # ________________________________________________________
@@ -222,4 +223,11 @@ def TwistJoint():
 # Development Only
 if __name__ == "__main__":
     #ReturnSelection(ComplexHierarchy=True, PrintReturn=True)
+    KayHelp("TwistJoint")
     pass
+
+
+
+
+
+  
