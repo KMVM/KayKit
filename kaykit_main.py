@@ -9,13 +9,20 @@ import maya.OpenMaya as om
 
 # Define Module Default Functions
 
-def kaykit_default():
+def kaykit_default(reset_prefixes=False):
     # Resets default prefixes when called after module import
     def set_prefix_defaults():
-        global rig_prefix_defaults
-        rig_prefix_defaults = {"skin": "skin_", "rig": "rig_", "fk": "fk_", "ik": "ik_", "ctrl": "ctrl_", "grp": "grp_"}
-
+        RIG_PREFIX_DEFAULTS = {"skin": "skin_", "rig": "rig_", "fk": "fk_", "ik": "ik_", "ctrl": "ctrl_", "grp": "grp_"}
+        global rig_prefixes
+        rig_prefixes = RIG_PREFIX_DEFAULTS
+        
+    def reset_prefix_defaults():
+        global rig_prefixes
+        rig_prefixes = RIGPREFIXDEFAULTS    
+        
     set_prefix_defaults()
+    if reset_prefixes:
+        reset_prefix_defaults()
 
 # KayKit defaults, currently can also be used to reset the defaults and will run on each import.
 
@@ -87,9 +94,9 @@ def set_prefix(prefix="", replace=""):
     elif replace == "":
         kay_help("set_prefix")
     else:
-        global rig_prefix_defaults
-        if rig_prefix_defaults.get(prefix) != None:
-            rig_prefix_defaults[prefix] = replace
+        global rig_prefixes
+        if rig_prefixes.get(prefix) != None:
+            rig_prefixes[prefix] = replace
         else:
             om.MGlobal.displayError("Prefix reassignment failed, incorrect prefix type or replace data type?")
 
@@ -240,7 +247,7 @@ def bind_rig_to_skin(input_skin_system="None", skin_prefix="skin_", rig_prefix="
         return()
 
     if selected_joints.get(prefix) != None:
-        rig_prefix_defaults[prefix] = replace
+        rig_prefixes[prefix] = replace
 
         #
         # SelectedJoints = cmds.ls(sl=True, type="joint")
@@ -297,5 +304,4 @@ def twist_joint(end_joint, start_joint="", auto_weight=True, no_propogation=Fals
 
 # Development Only
 if __name__ == "__main__":
-    kay_help()
     pass
