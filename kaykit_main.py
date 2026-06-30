@@ -106,7 +106,7 @@ def return_selection(specific_type="None", complex_hierarchy=False, hierarchy_de
 
         if relatives:
             for item in relatives:
-                if cmds.nodeType(item) != "transform":
+                if cmds.nodeType(item) == "shape":
                     found_shapes = found_shapes + [item]
 
             for item in found_shapes:
@@ -118,7 +118,7 @@ def return_selection(specific_type="None", complex_hierarchy=False, hierarchy_de
 
     def phrase_filter(list_to_filter, preferred_phrase="phrase"):
         if preferred_phrase == "":
-            return (list_to_filter)
+            return(list_to_filter)
         elif type(list_to_filter) != "list":
             raise Exception(f"A non-list object was input for the phrase_filter() nested function of Returnselection(). Object name: {list_to_filter}")
 
@@ -139,7 +139,7 @@ def return_selection(specific_type="None", complex_hierarchy=False, hierarchy_de
 
         return (filtered_list)
 
-        # Main Body
+    # Main Body
 
     final_selection = []
 
@@ -147,25 +147,25 @@ def return_selection(specific_type="None", complex_hierarchy=False, hierarchy_de
         selection = cmds.ls(sl=True)
 
         if selection:
-            relatives = cmds.listrelatives(selection[0], ad=True)
+            relatives = cmds.listRelatives(selection[0], ad=True)
             relatives.reverse()
         else:
-            return (final_selection)
+            return(final_selection)
 
     else:
         selection = cmds.ls(sl=True, type=specific_type)
 
         if selection:
-            relatives = cmds.listrelatives(selection[0], ad=True)
+            relatives = cmds.listRelatives(selection[0], ad=True)
         else:
-            return (final_selection)
+            return(final_selection)
 
         for elem in relatives:
             elemtype = cmds.objectType(elem)
             if elemtype != specific_type:
                 relatives.remove(elem)
 
-    ignore_shape_relatives(relatives)
+    #ignore_shape_relatives(relatives)
 
     # Returns list based on complex hierarchy argument
     if complex_hierarchy == True:
@@ -181,7 +181,7 @@ def return_selection(specific_type="None", complex_hierarchy=False, hierarchy_de
 
     if print_return:
         print(final_selection)
-    return (final_selection)
+    return(final_selection)
 
 
 # ________________________________________________________
@@ -195,16 +195,16 @@ def define_skeletal_system(type="None"):
 
     # User Selected Type To Define
 
-    sk_skinsystem = []
-    sk_rigsystem = []
+    sk_skin_system = []
+    sk_rig_system = []
 
     if type == "skin":
         root = cmds.ls(n=f"{skin_prefix}_root")[0]
-        sk_skinsystem = [root] + cmds.listrelatives(type="joint", ad=True)
+        sk_skin_system = [root] + cmds.listrelatives(type="joint", ad=True)
 
     elif Type == "rig":
         root = cmds.ls(n=f"{rig_prefix}_root")[0]
-        sk_rigsystem = [root] + cmds.listrelatives(type="joint", ad=True)
+        sk_rig_system = [root] + cmds.listrelatives(type="joint", ad=True)
 
     else:
         om.MGlobalDisplayError("Invalid type of skeletal system specified for definition. Valid types: 'skin', 'rig'")
@@ -214,49 +214,37 @@ def define_skeletal_system(type="None"):
 
 # ________________________________________________________
 
-def bind_rig_to_skin(input_skin_system="None", skin_prefix="skin_", rig_prefix="rig_"):
+def bind_rig_to_skin(input_skin_system="None", skin_prefix = rig_prefixes.get("skin"), rig_prefix = rig_prefixes.get("rig")):
+
     def get_skin_system():
 
-        joint_selection = return_selection(specific_type="joint")
+        joint_selection = return_selection(specific_type="joint", complex_hierarchy=True, print_return=True)
 
-        # Returnselection could include handling for no output? Including a name filter is a good idea
-
-        # Are any joints in the selection?
-        if joint_selection:
-            pass
-        else:
-            return ()
+        if joint_selection == []:
+            print("Error")
+            return()
 
         # Searches the selected joints for a root joint, always preferring to make it the parent of all descendents
-        if joint_selection.get("root") != None:
-            joint_selection = joint_selection.get("root")
-        else:
-            joint_selection = [joint_selection[0]]
+        #if joint_selection.get("root") != None:
+            #joint_selection = joint_selection.get("root")
+       # else:
+           # joint_selection = [joint_selection[0]]
 
-        joint_selection = "a"
+       # joint_selection = "a"
 
-        for jnt in selected_joints:
-            pass
+        #for jnt in selected_joints:
+            #pass
 
-        return()
-
-    if selected_joints.get(prefix) != None:
-        rig_prefixes[prefix] = replace
-
-        #
-        # SelectedJoints = cmds.ls(sl=True, type="joint")
-        # if SelectedJoints:
-        #    relatives = cmds.listrelatives(SelectedJoints[0], ad=True)
-        #    return(relatives + SelectedJoints)
-        # else:
-        #    return([])
+        return(joint_selection)
 
     def create_rig_system(skin_system):
-        if skin_system != True:
+        print(skin_system)
+        if skin_system == True:
             om.MGlobal.displayError("No valid skin system selected, select a root joint for a skin system.")
-            return ()
+            return()
         else:
             duplicate_skin_system = cmds.duplicate(skin_system, st=True, rc=True)
+            print(duplicate_skin_system)
             rig_system = []
 
         # Generates a list of names for the rig system
@@ -264,9 +252,10 @@ def bind_rig_to_skin(input_skin_system="None", skin_prefix="skin_", rig_prefix="
             rig_name = name.replace(skin_prefix, rig_prefix)
             rig_system.append(rig_name)
 
-            # Renames the duplicated joints to the list of new desired names
+        # Renames the duplicated joints to the list of new desired names
         for name in (duplicate_skin_system):
             rig_name = rig_system[duplicate_skin_system.index(name)]
+            print(rig_name)
             cmds.rename(name, rig_name)
 
         # Sets up parent constraints between rig and skin joint systems
