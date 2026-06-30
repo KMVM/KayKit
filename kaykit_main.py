@@ -9,20 +9,14 @@ import maya.OpenMaya as om
 
 # Define Module Default Functions
 
-def kaykit_default(reset_prefixes=False):
-    # Resets default prefixes when called after module import
+def kaykit_default():
     def set_prefix_defaults():
         RIG_PREFIX_DEFAULTS = {"skin": "skin_", "rig": "rig_", "fk": "fk_", "ik": "ik_", "ctrl": "ctrl_", "grp": "grp_"}
         global rig_prefixes
-        rig_prefixes = RIG_PREFIX_DEFAULTS
-        
-    def reset_prefix_defaults():
-        global rig_prefixes
-        rig_prefixes = RIGPREFIXDEFAULTS    
-        
+        rig_prefixes = RIG_PREFIX_DEFAULTS 
+         
+    # Set module defaults       
     set_prefix_defaults()
-    if reset_prefixes:
-        reset_prefix_defaults()
 
 # KayKit defaults, currently can also be used to reset the defaults and will run on each import.
 
