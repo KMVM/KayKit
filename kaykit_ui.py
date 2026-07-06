@@ -4,53 +4,51 @@ import maya.cmds as cmds
 import maya.OpenMaya as om
 import kaykit26 as kaykit
 
-# WORK IN PROGRESS
 
 # Function Definition    
         
-def main_ui(window_name="Main Window"):
+def colour_control_ui(cc_window_name="Colour Control Window", *args):
     
     # Duplicate Window Handling
-    if cmds.window(window_name, exists=True):
-        cmds.deleteUI(window_name)
-    
+    if cmds.window(cc_window_name, exists=True):
+        cmds.deleteUI(cc_window_name)
+        
     # Window + Layouts
-    m_ui_window = cmds.window(window_name, title="KayKit26 - Main Window", width=460)
-    m_ui_main_layout = cmds.columnLayout(p=m_ui_window)
-    m_ui_scroll_layout = cmds.scrollLayout(p=m_ui_main_layout, childResizable=True, margins4=(1, 2, 1, 2))
-    m_ui_content_layout = cmds.columnLayout(adj=True, p=m_ui_scroll_layout)
-    
-    # Controls     
-    
-    #m_return_selection_button = cmds.button(label="Return Selection", p=m_ui_content_layout, command=return_selection_ui)
-    #cmds.text("Returns a list of selected objects which can further be refined if desired.\n", p=m_ui_content_layout)
-    
-    m_colour_control_button = cmds.button(label="Colour Control", p=m_ui_content_layout)
-    cmds.text("Modify controller drawing overrides.\n", p=m_ui_content_layout)  
-    
-    m_bind_skin_to_rig_button = cmds.button(label="Bind Skin to Rig Joints", p=m_ui_content_layout)
-    cmds.text("Given a selection of skin joints, generate rig joints with constraints.\n", p=m_ui_content_layout)
-    
-    m_twist_joint_button = cmds.button(label="Twist Joints", p=m_ui_content_layout)
-    cmds.text("Manage and generate various aspects of twist joint systems.\n", p=m_ui_content_layout)     
-    
-    m_manage_prefixes_button = cmds.button(label="Manage Prefixes", p=m_ui_content_layout) 
-    cmds.text("View and modify prefixes in use.\n", p=m_ui_content_layout)
-    
-    m_kayhelp_button = cmds.button(label="Help Utility", p=m_ui_content_layout)
-    cmds.text("Opens a help utility window for further documentation on KayKit commands.\n", p=m_ui_content_layout)     
+    cc_ui_window = cmds.window(cc_window_name, title="KayKit26 - Colour Control", width=460)
+    cc_ui_main_layout = cmds.columnLayout(p=cc_ui_window) 
     
     # Show Window
-    cmds.showWindow(m_ui_window)
+    cmds.showWindow(cc_ui_window)
+
     
-                           
-def return_selection_ui(window_name="Return Selection Window"):
+def bind_skin_to_rig_ui(bsr_window_name="Bind Skin Joints to Rig Joints Window"):
+    
+    # Duplicate Window Handling
+    if cmds.window(bsr_window_name, exists=True):
+        cmds.deleteUI(bsr_window_name)
+        
+    # Window + Layouts
+    bsr_ui_window = cmds.window(bsr_window_name, title="KayKit26 - Bind Skin To Rig", width=360)
+    bsr_ui_main_layout = cmds.columnLayout(adj=True, p=bsr_ui_window)
+    
+    # Controls
+    
+    bsr_ui_cusom_prefix = cmds.checkBoxGrp(l="Customise Prefixes", p=bsr_ui_main_layout)
+    cmds.text("\nSkin Prefix to Search for / Rig Prefix To Create Joints With", p=bsr_ui_main_layout)  
+    bsr_ui_prefix_skin = cmds.textFieldGrp(label="Skin Prefix", p=bsr_ui_main_layout)
+    bsr_ui_prefix_rig = cmds.textFieldGrp(label="Rig Prefix", p=bsr_ui_main_layout)  
+    
+    # Show Window
+    cmds.showWindow(bsr_ui_window)  
+    
+                     
+def return_selection_ui(window_name="Return Selection Window", *args):
     
     if cmds.window(window_name, exists=True):
         cmds.deleteUI(window_name)
     
     # UI Window and Layout
-    rs_ui_window = cmds.window(window_name, title="KayKit 26 - Return Selection", width=500)
+    rs_ui_window = cmds.window(window_name, title="KayKit26 - Return Selection", width=500)
     rs_ui_layout = cmds.columnLayout(adj=True, p=rs_ui_window)
     
     
@@ -73,9 +71,48 @@ def return_selection_ui(window_name="Return Selection Window"):
     rs_ui_confirm = cmds.button(label="Return Selection")
     
     cmds.showWindow(rs_ui_window)
+
+
+def main_ui(window_name="Main Window"):
     
+    # Duplicate Window Handling
+    if cmds.window(window_name, exists=True):
+        cmds.deleteUI(window_name)
+        
+    def placeholder_msg(*kwargs):
+        om.MGlobal.displayInfo("KayKit26 Control Panel - Button does not function, work in progress.")  
+    
+    # Window + Layouts
+    m_ui_window = cmds.window(window_name, title="KayKit26 - Control Panel", width=460)
+    m_ui_main_layout = cmds.columnLayout(p=m_ui_window)
+    m_ui_scroll_layout = cmds.scrollLayout(p=m_ui_main_layout, childResizable=True, margins4=(1, 2, 1, 2))
+    m_ui_content_layout = cmds.columnLayout(adj=True, p=m_ui_scroll_layout)
+    
+    # Controls     
+    
+    #m_return_selection_button = cmds.button(label="Return Selection", p=m_ui_content_layout, command=return_selection_ui)
+    #cmds.text("Returns a list of selected objects which can further be refined if desired.\n", p=m_ui_content_layout)
+    
+    m_colour_control_button = cmds.button(label="Colour Control", p=m_ui_content_layout, command=colour_control_ui)
+    cmds.text("Modify controller drawing overrides.\n", p=m_ui_content_layout)  
+    
+    m_bind_skin_to_rig_button = cmds.button(label="Bind Skin to Rig Joints", p=m_ui_content_layout, command=bind_skin_to_rig_ui)
+    cmds.text("Given a selection of skin joints, generate rig joints with constraints.\n", p=m_ui_content_layout)
+    
+    m_twist_joint_button = cmds.button(label="Twist Joints", p=m_ui_content_layout, command=placeholder_msg)
+    cmds.text("Manage and generate various aspects of twist joint systems.\n", p=m_ui_content_layout)     
+    
+    m_manage_prefixes_button = cmds.button(label="Manage Prefixes", p=m_ui_content_layout, command=placeholder_msg) 
+    cmds.text("View and modify prefixes in use.\n", p=m_ui_content_layout)
+    
+    m_kayhelp_button = cmds.button(label="Help Utility", p=m_ui_content_layout, command=placeholder_msg)
+    cmds.text("Opens a help utility window for further documentation on KayKit commands.\n", p=m_ui_content_layout)     
+    
+    # Show Window
+    cmds.showWindow(m_ui_window)
+       
     
 # Development Only    
 if __name__ == "__main__":
     #return_selection_ui()
-    main_ui()
+    #main_ui()
