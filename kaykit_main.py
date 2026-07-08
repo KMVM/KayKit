@@ -34,20 +34,20 @@ def kay_help(command_name=""):
             om.MGlobal.displayInfo(help_info_msg)
         else:
             om.MGlobal.displayWarning(help_info_msg)
-        return ()
+        return
 
         # Defines a list of variables storing hint text
 
     kay_help_null = f"'{command_name}' not recognised, did you forget to wrap in quotations or remove the module name?"
     kay_help_default = "To get help on a KayKit command, format = kay_help('commandname')"
     kay_help_rs = "Returns a list containing the selection.\nArguments:\n - type (optional, expects string containing type to filter to)\n - all_descendents (optional, expects True or False, ensures all descendents are returned)\n - hierarchy_depth (optional, integer value for how many relatives to return.\n - print_return (optional, expects True or False, prints return of function to the script editor.\n - prefer_phrase (optional, will filter the initial selection to objects containing the phrase, not accounting for objects collected as descendents.)"
-    kay_help_brs = "Given a selected joint, builds a list of all descendents then constructs a set of rig joints that constrain the joint hierarchy\nArguments:\n - skin_system (optional, a specified list of skin joints, default behaviour uses selected top level joint)"
+    kay_help_bsr = "Given a selected joint, builds a list of all descendents then constructs a set of rig joints that constrain the joint hierarchy\nArguments:\n - skin_system (optional, a specified list of skin joints, default behaviour uses selected top level joint)"
     kay_help_tj = "Given a target joint, generates a twist joint in the parent skeletal system that is autoweighted if a valid skincluster is attached to the joint system, before inserting a duplicate into a matching rig or skin joint hierarchy as needed. \nArguments:\n - end_joint (required, when no start joint is specified the first parent joint is used instead.)\n - start_joint (If provided, will be the joint above the twist controller.)\n - auto_weight (Should an autoweight be attempted if a skin cluster is found? Defaults to False.)\n - no_propogation (Defaults to False, when enabled will ignore generating a matching rig or skin skeleton."
     kay_help_sp = "Sets a default prefix KayKit uses to identify types of systems. \nArguments:\n - prefix (valid string inputs: skin, rig, fk, ik, ctrl, grp)\n - replace (new prefix string to use, including _)"
     kay_help_dss = "Defines a skeletal system from a joint named root with a matching prefix. This returns a list that can be used to make changes to the system. \nArguments:\n - type (valid string inputs: skin, rig)"
 
     # Defines dictionary of help hints
-    kay_help_doc = {"return_selection": kay_help_rs, "bind_rig_to_skin": kay_help_brs, "twist_joint": kay_help_tj,
+    kay_help_doc = {"return_selection": kay_help_rs, "bind_skin_to_rig": kay_help_bsr, "twist_joint": kay_help_tj,
                   "set_prefix": kay_help_sp,
                   "define_skeletal_system": kay_help_dss}  # Each valid command name should be assigned a hint text variable as its key pair
     kay_help_list = kay_help_doc.keys()
@@ -77,10 +77,11 @@ def kay_help(command_name=""):
         else:
             kay_help_info(kay_help_null + f"\nValid command names:{kay_help_string}", is_warning=True)
 
-    return ()
+    return
 
 
 # ________________________________________________________
+
 
 def set_prefix(prefix="", replace=""):
     if prefix == "":
@@ -97,6 +98,8 @@ def set_prefix(prefix="", replace=""):
 # ________________________________________________________
 
 def return_selection(type="", all_descendents=False, hierarchy_depth=512, prefer_phrase="", print_return=False):
+    
+    # Add a flag to just return shape nodes so that locator command can set the scale of the entry by calling return_selection()
 
     def phrase_filter(list_to_filter, preferred_phrase):
         
@@ -106,13 +109,13 @@ def return_selection(type="", all_descendents=False, hierarchy_depth=512, prefer
         # Error handling
         if isinstance(list_to_filter, list) == False:
             om.MGlobal.displayError(f"phrase_filter - A non-list object was input for the phrase_filter() nested function of return_selection(), which now returns an empty list. Object name: {list_to_filter}")
-            return([])
+            return []
         elif isinstance(preferred_phrase, str) == False:
             om.MGlobal.displayError("phrase_filter - List was returned with no modifications. Phrase filter only accepts string data type as input phrase.")
-            return(list_to_filter)
+            return list_to_filter
         elif preferred_phrase == "":
             #om.MGlobal.displayWarning("phrase_filter - List was returned with no modifications. An empty string was specified as the preferred phrase.")
-            return(list_to_filter)
+            return list_to_filter
         else:
             pass
 
@@ -123,7 +126,7 @@ def return_selection(type="", all_descendents=False, hierarchy_depth=512, prefer
             else:
                 filtered_list.append(entry)
                                 
-        return(filtered_list) # with keyword filtered entries removed
+        return filtered_list # with keyword filtered entries removed
         
      
     # Function - return relatives from an input selection that are != to shapes  
@@ -140,25 +143,40 @@ def return_selection(type="", all_descendents=False, hierarchy_depth=512, prefer
             selection = [selection]
         else:
             om.MGlobal.displayError("get_relatives - Selection is not a valid list or string.")
-            return([])
+            return []
             
         # Is selection populated? This check happens in main body but is repeated for validity
         if selection:
             # Obtaining relatives from selection
             for object in selection:
-                relatives = cmds.listRelatives(object, ad=True)[:hierarchy_depth] 
+                relatives = []
+                try:
+                    relatives = cmds.listRelatives(object, ad=True)[:hierarchy_depth] #+ cmds.listRelatives(object, s=True)
+                except:
+                    pass
+                
+                if relatives == []:    
+                    return []
+                    
+                
+                direct_relatives = cmds.listRelatives(object, s=True) 
+                for relative in direct_relatives:
+                        all_shapes.append(relative)
+                    
                 if relatives:
                     for entry in relatives:
                         try:
                             shapes_found = shapes_found + cmds.listRelatives(entry, s=True)
                         except:
+                            shapes_found = shapes_found
                             pass
-                            
+
                         all_relatives.append(entry)
                             
                     if shapes_found:
                        for entry in shapes_found:
                            all_shapes.append(entry)
+                          
             
             # Compares the list of all_relatives to all names determined to belong to shapes and removes them                    
             for entry in all_shapes:
@@ -167,9 +185,9 @@ def return_selection(type="", all_descendents=False, hierarchy_depth=512, prefer
          
         # Selection is empty, so return an empty list of relatives rather than try to get relatives from invalid objects       
         else:
-            return([]) 
-               
-        return(all_relatives)      
+            return [] 
+          
+        return all_relatives      
             
     
     # Main Body - Determine list of selected objects to return to user/function
@@ -188,13 +206,13 @@ def return_selection(type="", all_descendents=False, hierarchy_depth=512, prefer
     if selection:
         pass
     else: 
-        return(final_selection)
+        return final_selection
 
     # Handles relative retrieval
 
-    relatives = get_relatives(selection)
-    
     if all_descendents:
+        
+        relatives = get_relatives(selection)
                
         if relatives:
             final_selection = selection + relatives   
@@ -217,7 +235,7 @@ def return_selection(type="", all_descendents=False, hierarchy_depth=512, prefer
     # Returns the final selection 
     if print_return:
         print(final_selection)
-    return(final_selection)
+    return final_selection
     
 
 def control_colour_utility():
@@ -226,12 +244,62 @@ def control_colour_utility():
 
 # ________________________________________________________
 
+def weaver(*args):
+    
+    selection = return_selection()
+        
+    if selection:
+        if len(selection) > 1:
+            pass
+        else:
+            om.MGlobal.displayError("Selection too small, needs at least two objects selected to weave.")
+            return
+            
+    else:
+        om.MGlobal.displayError("Nothing selected, please make a selection.")
+        return
+        
+    first_selection = selection[0]
+    selection.pop(0)
+    
+    first = "None"
+    last = "None"
+    
+    for entry in selection:
+        if last == "None":
+            last = entry
+            first = last
+        else:
+            try:
+                cmds.parent(entry, last)
+            except:
+                om.MGlobal.displayWarning("Unable to weave all selected objects into a hierarchy, aborting operation. This may be due to objects in a selection having relation to eachother.")
+            last = entry
+            
+    cmds.parent(first, first_selection)
+        
+# ________________________________________________________
+       
+def locator(replace=False):
+    selection = return_selection()
+    
+    if selection:
+        for object in selection:
+            
+            new_locator = cmds.spaceLocator(name=f"loc_{object}")
+            cmds.matchTransform(new_locator, object)
+        
+            if replace == True:
+                cmds.delete(object)
+    
+# ________________________________________________________    
+
 def define_skeletal_system(type="None"):
     # No User Input
 
     if type == "None":
         kay_help("define_skeletal_system")
-        return()
+        return
 
     # User Selected Type To Define
 
@@ -249,12 +317,12 @@ def define_skeletal_system(type="None"):
     else:
         om.MGlobalDisplayError("Invalid type of skeletal system specified for definition. Valid types: 'skin', 'rig'")
 
-    return ()
+    return
 
 
 # ________________________________________________________
 
-def bind_rig_to_skin(input_skin_system="None", skin_prefix = rig_prefixes.get("skin"), rig_prefix = rig_prefixes.get("rig")):
+def bind_skin_to_rig(input_skin_system="None", skin_prefix = rig_prefixes.get("skin"), rig_prefix = rig_prefixes.get("rig")):
 
     def get_skin_system():
 
@@ -262,7 +330,7 @@ def bind_rig_to_skin(input_skin_system="None", skin_prefix = rig_prefixes.get("s
 
         if joint_selection == []:
             om.MGlobal.displayError("No joints selected")
-            return()
+            return
 
         # Searches the selected joints for a root joint, always preferring to make it the parent of all descendents
         #if joint_selection.get("root") != None:
@@ -275,7 +343,7 @@ def bind_rig_to_skin(input_skin_system="None", skin_prefix = rig_prefixes.get("s
         #for jnt in selected_joints:
             #pass
 
-        return(joint_selection)
+        return joint_selection
 
     def create_rig_system(skin_system):
         if skin_system != True:
@@ -324,7 +392,7 @@ def bind_rig_to_skin(input_skin_system="None", skin_prefix = rig_prefixes.get("s
     
     if end_joint == "":
         om.m
-        return()
+        return
 
     return_selection(type="joint")
     
@@ -336,5 +404,4 @@ def bind_rig_to_skin(input_skin_system="None", skin_prefix = rig_prefixes.get("s
 
 # Development Only
 if __name__ == "__main__":
-    #return_selection(all_descendents=True, print_return=True)
     pass
