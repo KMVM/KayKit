@@ -73,6 +73,31 @@ def return_selection_ui(window_name="Return Selection Window", *args):
     cmds.showWindow(rs_ui_window)
 
 
+def weaver_ui(window_name="Weaver Window", *args):
+    
+    if cmds.window(window_name, exists=True):
+        cmds.deleteUI(window_name)   
+
+    # UI Window and Layout
+    wvr_ui_window = cmds.window(window_name, title="KayKit26 - Weaver", width=500)
+    wvr_ui_main_layout = cmds.columnLayout(adj=True, p=wvr_ui_window)   
+    wvr_ui_scroll_layout = cmds.scrollLayout(p=wvr_ui_main_layout, childResizable=True, margins4=(1, 2, 1, 2))
+    wvr_ui_content_layout = cmds.columnLayout(adj=True, p=wvr_ui_scroll_layout)  
+    
+    # Controls
+    #wvr_ui_inverse = cmds.checkBoxGrp(label="Weave Inverted.", p=wvr_ui_content_layout)
+    #cmds.text("Will weave or unweave in an inverted fashion.\n")
+    wvr_ui_builder_button = cmds.button(label="Weave Hierarchy", p=wvr_ui_content_layout, command=kaykit.weaver)
+    cmds.text("Given a selection of unrelated objects, will arrange them in a standard hierarchy.\n")
+    wvr_ui_demolition_button = cmds.button(label="Unweave Hierarchy", p=wvr_ui_content_layout)
+    cmds.text("Remove all selected objects from a hierarchy.\n")
+
+    
+    # Show Window
+    
+    cmds.showWindow(wvr_ui_window)
+    
+
 def main_ui(window_name="Main Window"):
     
     # Duplicate Window Handling
@@ -102,6 +127,9 @@ def main_ui(window_name="Main Window"):
     m_twist_joint_button = cmds.button(label="Twist Joints", p=m_ui_content_layout, command=placeholder_msg)
     cmds.text("Manage and generate various aspects of twist joint systems.\n", p=m_ui_content_layout)     
     
+    m_weaver_button = cmds.button(label="Weaver", p=m_ui_content_layout, command=weaver_ui)
+    cmds.text("Manipulate hierarchies in a range of ways.\n")
+    
     m_manage_prefixes_button = cmds.button(label="Manage Prefixes", p=m_ui_content_layout, command=placeholder_msg) 
     cmds.text("View and modify prefixes in use.\n", p=m_ui_content_layout)
     
@@ -115,4 +143,4 @@ def main_ui(window_name="Main Window"):
 # Development Only    
 if __name__ == "__main__":
     #return_selection_ui()
-    #main_ui()
+    main_ui()
