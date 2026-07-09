@@ -1,8 +1,10 @@
-# KayKit 26 - UI Module
+ # KayKit 26 - UI Module
 
 import maya.cmds as cmds
 import maya.OpenMaya as om
 import kaykit26 as kaykit
+from functools import partial
+
 
 
 # Function Definition    
@@ -87,9 +89,9 @@ def weaver_ui(window_name="Weaver Window", *args):
     # Controls
     #wvr_ui_inverse = cmds.checkBoxGrp(label="Weave Inverted.", p=wvr_ui_content_layout)
     #cmds.text("Will weave or unweave in an inverted fashion.\n")
-    wvr_ui_builder_button = cmds.button(label="Weave Hierarchy", p=wvr_ui_content_layout, command=kaykit.weaver)
+    wvr_ui_builder_button = cmds.button(label="Weave Hierarchy", p=wvr_ui_content_layout, command=partial(kaykit.weaver, function="weave"))
     cmds.text("Given a selection of unrelated objects, will arrange them in a standard hierarchy.\n")
-    wvr_ui_demolition_button = cmds.button(label="Unweave Hierarchy", p=wvr_ui_content_layout)
+    wvr_ui_demolition_button = cmds.button(label="Unweave Hierarchy", p=wvr_ui_content_layout, command=partial(kaykit.weaver, function="unweave"))
     cmds.text("Remove all selected objects from a hierarchy.\n")
 
     
@@ -142,5 +144,4 @@ def main_ui(window_name="Main Window"):
     
 # Development Only    
 if __name__ == "__main__":
-    #return_selection_ui()
-    main_ui()
+    #main_ui()
