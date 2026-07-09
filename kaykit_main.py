@@ -277,6 +277,7 @@ def weaver(*args):
             last = entry
             
     cmds.parent(first, first_selection)
+    cmds.select(first_selection, r=True)
         
 # ________________________________________________________
        
