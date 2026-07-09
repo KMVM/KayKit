@@ -82,7 +82,6 @@ def kay_help(command_name=""):
 
 # ________________________________________________________
 
-
 def set_prefix(prefix="", replace=""):
     if prefix == "":
         kay_help("set_prefix")
@@ -186,8 +185,9 @@ def return_selection(type="", all_descendents=False, hierarchy_depth=512, prefer
         # Selection is empty, so return an empty list of relatives rather than try to get relatives from invalid objects       
         else:
             return [] 
-          
-        return all_relatives      
+        
+        all_relatives = all_relatives[::-1]
+        return all_relatives   
             
     
     # Main Body - Determine list of selected objects to return to user/function
@@ -244,41 +244,81 @@ def control_colour_utility():
 
 # ________________________________________________________
 
-def weaver(*args):
+def weaver(*args, function="weave"):
     
-    selection = return_selection()
+    def weave():
         
-    if selection:
-        if len(selection) > 1:
-            pass
+        selection = return_selection()
+        
+        if selection:
+            if len(selection) <= 1:
+                om.MGlobal.displayError("Selection too small, needs at least two objects selected to weave.")
+                return
         else:
-            om.MGlobal.displayError("Selection too small, needs at least two objects selected to weave.")
-            return
-            
-    else:
-        om.MGlobal.displayError("Nothing selected, please make a selection.")
-        return
-        
-    first_selection = selection[0]
-    selection.pop(0)
+            om.MGlobal.displayError("Selection is empty, needs at least two objects selected to weave.")
+                
+        first_selection = selection[0]
+        selection.pop(0)
     
-    first = "None"
-    last = "None"
-    
-    for entry in selection:
-        if last == "None":
-            last = entry
-            first = last
+        first = "None"
+        last = "None"
+
+        for entry in selection:
+            if last == "None":
+                last = entry
+                first = last
         else:
             try:
                 cmds.parent(entry, last)
             except:
                 om.MGlobal.displayWarning("Unable to weave all selected objects into a hierarchy, aborting operation. This may be due to objects in a selection having relation to eachother.")
+                
             last = entry
             
-    cmds.parent(first, first_selection)
-    cmds.select(first_selection, r=True)
+            cmds.parent(first, first_selection)
+            cmds.select(first_selection, r=True)
+             
+    def unweave():
         
+        selection = []
+        selection = return_selection
+        
+        # Check selection is populated
+        if selection:
+            pass
+        else:
+            om.Mglobal.displayError("Nothing to unweave, selection is empty.")
+            return
+          
+        # Check for length of selection to determine behaviour    
+        if len([selection]) > 1:
+            pass
+        else:
+            if len(return_selection(all_descendents=True)) > 0:
+                selection = return_selection(all_descendents=True)
+        
+        
+        #selection = sorted(selection, reverse=True)
+        
+        print(selection)
+        
+        if isinstance(selection, list):
+                           
+            for entry in selection:
+                print(entry)
+                cmds.parent(entry, w=True)
+            
+        return
+
+        
+    if function == "weave":
+        weave()
+    elif function == "unweave":
+        unweave()
+    else:
+        om.MGlobal.displayWarning(f"Weaver did not act as an invalid function, '{function}', was specified - Valid function name examples: 'weave', 'unweave'.")
+        return
+                
 # ________________________________________________________
        
 def locator(replace=False):
