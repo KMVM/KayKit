@@ -443,6 +443,36 @@ def bind_skin_to_rig(input_skin_system="None", skin_prefix = rig_prefixes.get("s
 
 # ________________________________________________________
 
+def cc_auto_paint_joints(skip_phrase_list=["skirt"]):
+    
+    all_joints = cmds.ls(type="joint")
+    
+    for jnt in all_joints:
+        contains_left = "left" in jnt
+        contains_right = "right" in jnt
+        skip = False
+        
+        if contains_left == False and contains_right == False:
+            continue
+        
+        for phrase in skip_phrase_list:   
+            if phrase in jnt:
+                skip = True
+                break
+               
+        if skip == True:
+            continue 
+         
+        if contains_left:
+            cmds.color(jnt, ud=6)
+            continue
+            
+        if contains_right:
+            cmds.color(jnt, ud=1)
+            continue
+     
+# ________________________________________________________
+
 # Development Only
 if __name__ == "__main__":
     pass
