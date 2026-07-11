@@ -98,34 +98,44 @@ def set_prefix(prefix="", replace=""):
 
 def return_selection(type="", all_descendents=False, hierarchy_depth=512, prefer_phrase="", print_return=False):
     
-    # Add a flag to just return shape nodes so that locator command can set the scale of the entry by calling return_selection()
 
     def phrase_filter(list_to_filter, preferred_phrase):
-        
-        filtered_list = []
-        found_match = False
-                
+              
         # Error handling
+        
+        # Is list_to_filter a valid list?
         if isinstance(list_to_filter, list) == False:
             om.MGlobal.displayError(f"phrase_filter - A non-list object was input for the phrase_filter() nested function of return_selection(), which now returns an empty list. Object name: {list_to_filter}")
             return []
+           
+        # Is the list empty? 
+        elif list_to_filter == []:
+            om.MGlobal.displayError(f"phrase_filter - An empty list was used as input.")
+            return []
+        
+        # Is the preferred phrase an invalid data type?    
         elif isinstance(preferred_phrase, str) == False:
             om.MGlobal.displayError("phrase_filter - List was returned with no modifications. Phrase filter only accepts string data type as input phrase.")
             return list_to_filter
+        
+        # Is the preferred phrase empty, and thus invalid?    
         elif preferred_phrase == "":
-            #om.MGlobal.displayWarning("phrase_filter - List was returned with no modifications. An empty string was specified as the preferred phrase.")
+            print("phrase_filter - List was returned with no modifications. An empty string was specified as the preferred phrase.")
             return list_to_filter
         else:
             pass
 
         # Collects entries in the list with the specified filter phrase
+        filtered_list = []
+        
         for entry in list_to_filter:
             if preferred_phrase in entry:
                 pass
             else:
                 filtered_list.append(entry)
-                                
-        return filtered_list # with keyword filtered entries removed
+        
+        # Return the filtered list                        
+        return filtered_list
         
      
     # Function - return relatives from an input selection that are != to shapes  
@@ -149,15 +159,8 @@ def return_selection(type="", all_descendents=False, hierarchy_depth=512, prefer
             # Obtaining relatives from selection
             for object in selection:
                 relatives = []
-                try:
-                    relatives = cmds.listRelatives(object, ad=True)[:hierarchy_depth] #+ cmds.listRelatives(object, s=True)
-                except:
-                    pass
-                
-                if relatives == []:    
-                    return []
+                relatives = cmds.listRelatives(object, ad=True)[:hierarchy_depth]
                     
-                
                 direct_relatives = cmds.listRelatives(object, s=True) 
                 for relative in direct_relatives:
                         all_shapes.append(relative)
@@ -186,6 +189,7 @@ def return_selection(type="", all_descendents=False, hierarchy_depth=512, prefer
         else:
             return [] 
         
+        # Return list of relatives in reverse order
         all_relatives = all_relatives[::-1]
         return all_relatives   
             
@@ -194,21 +198,21 @@ def return_selection(type="", all_descendents=False, hierarchy_depth=512, prefer
 
     final_selection = []
     
-    # Handles "type=" argument
+    # Type
     
     if type == "":
         selection = cmds.ls(sl=True)
     else:
         selection = cmds.ls(sl=True, type=type)    
     
-    # Checks if selection is valid
+    # Selection validity
      
     if selection:
         pass
     else: 
         return final_selection
 
-    # Handles relative retrieval
+    # Relatives
 
     if all_descendents:
         
@@ -218,12 +222,12 @@ def return_selection(type="", all_descendents=False, hierarchy_depth=512, prefer
             final_selection = selection + relatives   
             
         else:
-            final_selection = selection   
+            final_selection = selection
             
     else:
         final_selection = selection
         
-    # Type filter
+    # Type filter (accounts for relatives)
     if type != "":
         for elem in final_selection:
             if cmds.objectType(elem) != type:
@@ -236,7 +240,8 @@ def return_selection(type="", all_descendents=False, hierarchy_depth=512, prefer
     if print_return:
         print(final_selection)
     return final_selection
-    
+
+# ________________________________________________________    
 
 def control_colour_utility():
     pass
@@ -366,9 +371,8 @@ def define_skeletal_system(type="None"):
 def bind_skin_to_rig(input_skin_system="None", skin_prefix = rig_prefixes.get("skin"), rig_prefix = rig_prefixes.get("rig")):
 
     def get_skin_system():
-
+        print("Here")
         joint_selection = return_selection(type="joint", all_descendents=True, print_return=True)
-
         if joint_selection == []:
             om.MGlobal.displayError("No joints selected")
             return
@@ -443,7 +447,7 @@ def bind_skin_to_rig(input_skin_system="None", skin_prefix = rig_prefixes.get("s
 
 # ________________________________________________________
 
-def cc_auto_paint_joints(skip_phrase_list=["skirt"]):
+def cc_auto_paint_joints(skip_phrase_list=["skirt", "root"]):
     
     all_joints = cmds.ls(type="joint")
     
@@ -454,7 +458,8 @@ def cc_auto_paint_joints(skip_phrase_list=["skirt"]):
         
         if contains_left == False and contains_right == False:
             continue
-        
+         
+        # Phrase Filter
         for phrase in skip_phrase_list:   
             if phrase in jnt:
                 skip = True
