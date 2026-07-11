@@ -272,21 +272,23 @@ def weaver(*args, function="weave"):
             if last == "None":
                 last = entry
                 first = last
-        else:
-            try:
-                cmds.parent(entry, last)
-            except:
-                om.MGlobal.displayWarning("Unable to weave all selected objects into a hierarchy, aborting operation. This may be due to objects in a selection having relation to eachother.")
+            else:
+                try:
+                    cmds.parent(entry, last)
+                    print(entry)
+                    print(last)
+                except:
+                    om.MGlobal.displayWarning("Unable to weave all selected objects into a hierarchy, aborting operation. This may be due to objects in a selection having relation to eachother.")
+                    
+                last = entry
                 
-            last = entry
-            
-            cmds.parent(first, first_selection)
-            cmds.select(first_selection, r=True)
+                cmds.parent(first, first_selection)
+                cmds.select(first_selection, r=True)
              
     def unweave():
         
         selection = []
-        selection = return_selection
+        selection = return_selection()
         
         # Check selection is populated
         if selection:
@@ -300,18 +302,19 @@ def weaver(*args, function="weave"):
             pass
         else:
             if len(return_selection(all_descendents=True)) > 0:
+                first_selection = selection
                 selection = return_selection(all_descendents=True)
         
         
         #selection = sorted(selection, reverse=True)
-        
-        print(selection)
         
         if isinstance(selection, list):
                            
             for entry in selection:
                 print(entry)
                 cmds.parent(entry, w=True)
+                
+        cmds.select(first_selection, r=True)
             
         return
 
