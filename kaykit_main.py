@@ -1,104 +1,26 @@
 # KayKit 26 - by Kieran Morley
 
-# ________________________________________________________
-
-# Module Import
+# Module Import and Constants
 import maya.cmds as cmds
 import maya.OpenMaya as om
 
+KAYKIT_VERSION = "KayKit26.indev.1607-01"
 
-# Define Module Default Functions
+# Base Class Definition
 
-def kaykit_default():
-    def set_prefix_defaults():
-        RIG_PREFIX_DEFAULTS = {"skin": "skin_", "rig": "rig_", "fk": "fk_", "ik": "ik_", "ctrl": "ctrl_", "grp": "grp_"}
-        global rig_prefixes
-        rig_prefixes = RIG_PREFIX_DEFAULTS 
-         
-    # Set module defaults       
-    set_prefix_defaults()
-
-# KayKit defaults, currently can also be used to reset the defaults and will run on each import.
-
-kaykit_default()
-
-
-# ________________________________________________________
-
-def kay_help(command_name=""):
-    # Defines the print function used to display information to the user
-
-    def kay_help_info(help_info_msg="", is_warning=False):
-        print("KayKit26")
-        if is_warning == False:
-            om.MGlobal.displayInfo(help_info_msg)
-        else:
-            om.MGlobal.displayWarning(help_info_msg)
-        return
-
-        # Defines a list of variables storing hint text
-
-    kay_help_null = f"'{command_name}' not recognised, did you forget to wrap in quotations or remove the module name?"
-    kay_help_default = "To get help on a KayKit command, format = kay_help('commandname')"
-    kay_help_rs = "Returns a list containing the selection.\nArguments:\n - type (optional, expects string containing type to filter to)\n - all_descendents (optional, expects True or False, ensures all descendents are returned)\n - hierarchy_depth (optional, integer value for how many relatives to return.\n - print_return (optional, expects True or False, prints return of function to the script editor.\n - prefer_phrase (optional, will filter the initial selection to objects containing the phrase, not accounting for objects collected as descendents.)"
-    kay_help_bsr = "Given a selected joint, builds a list of all descendents then constructs a set of rig joints that constrain the joint hierarchy\nArguments:\n - skin_system (optional, a specified list of skin joints, default behaviour uses selected top level joint)"
-    kay_help_tj = "Given a target joint, generates a twist joint in the parent skeletal system that is autoweighted if a valid skincluster is attached to the joint system, before inserting a duplicate into a matching rig or skin joint hierarchy as needed. \nArguments:\n - end_joint (required, when no start joint is specified the first parent joint is used instead.)\n - start_joint (If provided, will be the joint above the twist controller.)\n - auto_weight (Should an autoweight be attempted if a skin cluster is found? Defaults to False.)\n - no_propogation (Defaults to False, when enabled will ignore generating a matching rig or skin skeleton."
-    kay_help_sp = "Sets a default prefix KayKit uses to identify types of systems. \nArguments:\n - prefix (valid string inputs: skin, rig, fk, ik, ctrl, grp)\n - replace (new prefix string to use, including _)"
-    kay_help_dss = "Defines a skeletal system from a joint named root with a matching prefix. This returns a list that can be used to make changes to the system. \nArguments:\n - type (valid string inputs: skin, rig)"
-
-    # Defines dictionary of help hints
-    kay_help_doc = {"return_selection": kay_help_rs, "bind_skin_to_rig": kay_help_bsr, "twist_joint": kay_help_tj,
-                  "set_prefix": kay_help_sp,
-                  "define_skeletal_system": kay_help_dss}  # Each valid command name should be assigned a hint text variable as its key pair
-    kay_help_list = kay_help_doc.keys()
-    kay_help_msg = kay_help_doc.get(command_name)
-    kay_help_string = ""
-
-    # Determines if hint text should be returned
-
-    if kay_help_msg == None:
-        kay_help_needed = True
-    else:
-        kay_help_needed = False
-
-    # Valid command as input
-
-    if kay_help_needed == False:
-        # print(f"{CommandName}: \n {kayhelpmsg}")
-        kay_help_info(f"{command_name}: \n {kay_help_msg}")
-
-    else:  # Invalid command as input
-        for entry in kay_help_list:
-            entry = entry.replace(entry, f" - {entry}")
-            kay_help_string = f"{kay_help_string}\n {entry}"
-
-        if command_name == "":
-            kay_help_info(kay_help_default + f"\nValid command names:{kay_help_string}")
-        else:
-            kay_help_info(kay_help_null + f"\nValid command names:{kay_help_string}", is_warning=True)
-
-    return
-
-
-# ________________________________________________________
-
-def set_prefix(prefix="", replace=""):
-    if prefix == "":
-        kay_help("set_prefix")
-    elif replace == "":
-        kay_help("set_prefix")
-    else:
-        global rig_prefixes
-        if rig_prefixes.get(prefix) != None:
-            rig_prefixes[prefix] = replace
-        else:
-            om.MGlobal.displayError("Prefix reassignment failed, incorrect prefix type or replace data type?")
-
-# ________________________________________________________
-
+# --------------------------------------------------------
+class KayKitTool(object):
+    
+    CLASS_NAME = "KayKitTool"
+    TOOL_HELPER_TEXT = {"helper":"Print help text for the user."}
+    
+    @classmethod
+    def helper(*args, class_name="Null Class...", method="With No Method Specified", tool_helper_text="[!] Specify a method specific to the input class for more information."):
+        print(f"{KAYKIT_VERSION}\n{class_name}\n{method}\n{tool_helper_text}")
+                
+# --------------------------------------------------------
 def return_selection(type="", all_descendents=False, hierarchy_depth=512, prefer_phrase="", print_return=False):
     
-
     def phrase_filter(list_to_filter, preferred_phrase):
               
         # Error handling
@@ -240,19 +162,79 @@ def return_selection(type="", all_descendents=False, hierarchy_depth=512, prefer
     if print_return:
         print(final_selection)
     return final_selection
-
-# ________________________________________________________    
-
-def control_colour_utility():
-    pass
     
-
-# ________________________________________________________
-
-def weaver(*args, function="weave"):
+# --------------------------------------------------------
+class Prefixes(KayKitTool):
     
-    def weave():
+    #Helper Constants
+    CLASS_NAME = "Prefixes"
+    TOOL_HELPER_TEXT = {"set_prefix_defaults":"Reset prefixes to their default values.", "set_prefix":"Replace a prefix name. Arguments: prefix (string), replace (string)"}
+    
+    #Tool Constants
+    RIG_PREFIX_DEFAULTS = {"skin": "skin_", "rig": "rig_", "fk": "fk_", "ik": "ik_", "ctrl": "ctrl_", "grp": "grp_"}
+
+    #Methods
+    @classmethod
+    def set_prefix_defaults(*args):
+        rig_prefixes = Prefixes.RIG_PREFIX_DEFAULTS
         
+    @classmethod
+    def set_prefix(*args, prefix="", replace=""):
+        if prefix == "":
+            KayKitTool.helper()
+        elif replace == "":
+            KayKitTool.helper()
+        else:
+            global rig_prefixes
+            if rig_prefixes.get(prefix) != None:
+                rig_prefixes[prefix] = replace
+            else:
+                om.MGlobal.displayError("Prefix reassignment failed, incorrect prefix type or replace data type?")
+                
+# -------------------------------------------------------- 
+class ColourControl(KayKitTool):
+    
+    @classmethod
+    def paint_joints():
+        pass
+    
+    @classmethod
+    def paint_controls():
+        pass
+    
+    @classmethod    
+    def auto_paint_joints(*args, skip_phrase_list=["skirt", "root"]):
+    
+        all_joints = cmds.ls(type="joint")
+        
+        if all_joints:
+            for jnt in all_joints:
+                contains_left = "left" in jnt
+                contains_right = "right" in jnt
+                skip = False
+                
+                if contains_left == False and contains_right == False:
+                    continue
+                 
+                # Phrase Filter
+                for phrase in skip_phrase_list:   
+                    if phrase in jnt:
+                        skip = True
+                        break
+                if skip == True:
+                    continue 
+                if contains_left:
+                    cmds.color(jnt, ud=6)
+                    continue
+                if contains_right:
+                    cmds.color(jnt, ud=1)
+                    continue
+                
+# --------------------------------------------------------        
+class Weaver(KayKitTool):
+    
+    @classmethod
+    def weave(*args):
         selection = return_selection()
         
         if selection:
@@ -277,15 +259,18 @@ def weaver(*args, function="weave"):
                     cmds.parent(entry, last)
                     print(entry)
                     print(last)
+                    
                 except:
                     om.MGlobal.displayWarning("Unable to weave all selected objects into a hierarchy, aborting operation. This may be due to objects in a selection having relation to eachother.")
                     
                 last = entry
                 
                 cmds.parent(first, first_selection)
-                cmds.select(first_selection, r=True)
-             
-    def unweave():
+                cmds.select(first_selection, r=True)     
+        return
+    
+    @classmethod    
+    def unweave(*args):
         
         selection = []
         selection = return_selection()
@@ -304,10 +289,7 @@ def weaver(*args, function="weave"):
             if len(return_selection(all_descendents=True)) > 0:
                 first_selection = selection
                 selection = return_selection(all_descendents=True)
-        
-        
-        #selection = sorted(selection, reverse=True)
-        
+
         if isinstance(selection, list):
                            
             for entry in selection:
@@ -317,18 +299,8 @@ def weaver(*args, function="weave"):
         cmds.select(first_selection, r=True)
             
         return
-
         
-    if function == "weave":
-        weave()
-    elif function == "unweave":
-        unweave()
-    else:
-        om.MGlobal.displayWarning(f"Weaver did not act as an invalid function, '{function}', was specified - Valid function name examples: 'weave', 'unweave'.")
-        return
-                
-# ________________________________________________________
-       
+# --------------------------------------------------------  
 def locator(replace=False):
     selection = return_selection()
     
@@ -340,9 +312,8 @@ def locator(replace=False):
         
             if replace == True:
                 cmds.delete(object)
-    
-# ________________________________________________________    
-
+                
+# --------------------------------------------------------  
 def define_skeletal_system(type="None"):
     # No User Input
 
@@ -367,10 +338,8 @@ def define_skeletal_system(type="None"):
         om.MGlobalDisplayError("Invalid type of skeletal system specified for definition. Valid types: 'skin', 'rig'")
 
     return
-
-
-# ________________________________________________________
-
+    
+# --------------------------------------------------------  
 def bind_skin_to_rig(input_skin_system="None", skin_prefix = rig_prefixes.get("skin"), rig_prefix = rig_prefixes.get("rig")):
 
     def get_skin_system():
@@ -378,19 +347,7 @@ def bind_skin_to_rig(input_skin_system="None", skin_prefix = rig_prefixes.get("s
         joint_selection = return_selection(type="joint", all_descendents=True, print_return=True)
         if joint_selection == []:
             om.MGlobal.displayError("No joints selected")
-            return
-
-        # Searches the selected joints for a root joint, always preferring to make it the parent of all descendents
-        #if joint_selection.get("root") != None:
-            #joint_selection = joint_selection.get("root")
-       # else:
-           # joint_selection = [joint_selection[0]]
-
-       # joint_selection = "a"
-
-        #for jnt in selected_joints:
-            #pass
-
+            return []
         return joint_selection
 
     def create_rig_system(skin_system):
@@ -430,56 +387,21 @@ def bind_skin_to_rig(input_skin_system="None", skin_prefix = rig_prefixes.get("s
     else:
         create_rig_system(skin_system)
 
-
-# ________________________________________________________
-
-#def twist_joint(end_joint="", start_joint="", auto_weight=True, no_propogation=False):
+# --------------------------------------------------------  
+def twist_joint(end_joint="", start_joint="", auto_weight=True, no_propogation=False):
     if return_selection() == []:
-        print("a")
-        
-    
+        pass
+
     if end_joint == "":
-        om.m
-        return
+        pass
 
     return_selection(type="joint")
-    
-    # cmds.ls(sl=True, type="joint")
     pass
-
-
-# ________________________________________________________
-
-def cc_auto_paint_joints(skip_phrase_list=["skirt", "root"]):
     
-    all_joints = cmds.ls(type="joint")
-    
-    for jnt in all_joints:
-        contains_left = "left" in jnt
-        contains_right = "right" in jnt
-        skip = False
-        
-        if contains_left == False and contains_right == False:
-            continue
-         
-        # Phrase Filter
-        for phrase in skip_phrase_list:   
-            if phrase in jnt:
-                skip = True
-                break
-               
-        if skip == True:
-            continue 
-         
-        if contains_left:
-            cmds.color(jnt, ud=6)
-            continue
-            
-        if contains_right:
-            cmds.color(jnt, ud=1)
-            continue
-     
-# ________________________________________________________
+# --------------------------------------------------------  
+
+# Default
+Prefixes.set_prefix_defaults()    
 
 # Development Only
 if __name__ == "__main__":
