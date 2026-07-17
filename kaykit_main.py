@@ -1,29 +1,52 @@
 # KayKit 26 - by Kieran Morley
 
-# Module Import and Constants
+KAYKIT_VERSION = "KayKit26.indev.1607-01"
+
 import maya.cmds as cmds
 import maya.OpenMaya as om
-
-KAYKIT_VERSION = "KayKit26.indev.1607-01"
 
 # Base Class Definition
 
 # --------------------------------------------------------
 class KayKitTool(object):
     
-    CLASS_NAME = "KayKitTool"
-    TOOL_HELPER_TEXT = {"helper":"Print help text for the user."}
+    HELPER_TEXT = {"helper":"Prints help text for the user. Call from a child class to view information about its uses and methods."}
     
     @classmethod
-    def helper(*args, class_name="Null Class...", method="With No Method Specified", tool_helper_text="[!] Specify a method specific to the input class for more information."):
-        print(f"{KAYKIT_VERSION}\n{class_name}\n{method}\n{tool_helper_text}")
-                
+    def helper(self, method=""):
+        # Has the user included a method to query instead of the class? And is that a valid method that belongs to the class?
+        specific_method = False
+        if method:
+            method_text = self.HELPER_TEXT.get(method)
+            if method_text:
+                specific_method = True
+        
+        # If the user is querying a method to a class, print information about that method. Otherwise print all available methods to the class instead.        
+        if specific_method == True:
+            print(f"Class Name: {self.__name__}\nMethod Name: {method}\nDescription: {method_text}\n\nTo view all methods available to this class, call helper function with no arguments.")
+            
+        else:
+            available_methods = "" 
+            for entry in self.HELPER_TEXT:
+                available_methods = available_methods + f"\n - {entry}"
+            print(f"Class Name: {self.__name__}\nAvailable Methods:{available_methods}\n\nFor more details on an available method to this class, pass as a string to helper function.")
+                 
 # --------------------------------------------------------
-def return_selection(type="", all_descendents=False, hierarchy_depth=512, prefer_phrase="", print_return=False):
+
+# Available classes and functions
+
+# --------------------------------------------------------
+class SelectUtility(KayKitTool):
     
-    def phrase_filter(list_to_filter, preferred_phrase):
-              
-        # Error handling
+    HELPER_TEXT = {"return_selection":"Returns a list containing the selection.\nArguments:\n - type (optional, expects string containing type to filter to)\n - all_descendents " \
+    "(optional, expects True or False, ensures all descendents are returned)\n - hierarchy_depth (optional, integer value for how many relatives to return.\n - print_return (optional, " \
+    "expects True or False, prints return of function to the script editor.\n - prefer_phrase (optional, will filter the initial selection to objects containing the phrase, not accounting " \
+    "for objects collected as descendents.)", "phrase_filter":"Given a list, filters entries out that do not contain a given phrase.\nArguments:\n - list_to_filter (required, the list to filter for.)" \
+    "\n - preferred_phrase (required, the phrase that entries must include.)", "get_relatives":"Get a list of relatives from a selection.\nArguments:\n - selection (required, list of selected objects " \
+    "to search through."}
+    
+    @classmethod
+    def phrase_filter(self, list_to_filter, preferred_phrase):
         
         # Is list_to_filter a valid list?
         if isinstance(list_to_filter, list) == False:
@@ -58,11 +81,9 @@ def return_selection(type="", all_descendents=False, hierarchy_depth=512, prefer
         
         # Return the filtered list                        
         return filtered_list
-        
-     
-    # Function - return relatives from an input selection that are != to shapes  
-    def get_relatives(selection):
-        
+    
+    @classmethod
+    def get_relatives(self, selection):
         all_relatives = [] 
         all_shapes = []
         shapes_found = []
@@ -114,78 +135,76 @@ def return_selection(type="", all_descendents=False, hierarchy_depth=512, prefer
         # Return list of relatives in reverse order
         all_relatives = all_relatives[::-1]
         return all_relatives   
-            
-    
-    # Main Body - Determine list of selected objects to return to user/function
-
-    final_selection = []
-    
-    # Type
-    
-    if type == "":
-        selection = cmds.ls(sl=True)
-    else:
-        selection = cmds.ls(sl=True, type=type)    
-    
-    # Selection validity
-     
-    if selection:
-        pass
-    else: 
-        return final_selection
-
-    # Relatives
-
-    if all_descendents:
         
-        relatives = get_relatives(selection)
-               
-        if relatives:
-            final_selection = selection + relatives   
+    @classmethod
+    def return_selection(self, type="", all_descendents=False, hierarchy_depth=512, prefer_phrase="", print_return=False):
+        
+        final_selection = []
+    
+        # Type
+        
+        if type == "":
+            selection = cmds.ls(sl=True)
+        else:
+            selection = cmds.ls(sl=True, type=type)    
+        
+        # Selection validity
+         
+        if selection:
+            pass
+        else: 
+            return final_selection
+    
+        # Relatives
+    
+        if all_descendents:
             
+            relatives = SelectUtility.get_relatives(selection)
+                   
+            if relatives:
+                final_selection = selection + relatives   
+                
+            else:
+                final_selection = selection
+                
         else:
             final_selection = selection
             
-    else:
-        final_selection = selection
-        
-    # Type filter (accounts for relatives)
-    if type != "":
-        for elem in final_selection:
-            if cmds.objectType(elem) != type:
-                final_selection.remove(elem)  
-      
-    # Phrase filter
-    final_selection = phrase_filter(final_selection, prefer_phrase)        
-
-    # Returns the final selection 
-    if print_return:
-        print(final_selection)
-    return final_selection
+        # Type filter (accounts for relatives)
+        if type != "":
+            for elem in final_selection:
+                if cmds.objectType(elem) != type:
+                    final_selection.remove(elem)  
+          
+        # Phrase filter
+        final_selection = SelectUtility.phrase_filter(final_selection, prefer_phrase)        
     
+        # Returns the final selection 
+        if print_return:
+            print(final_selection)
+        return final_selection
+
 # --------------------------------------------------------
 class Prefixes(KayKitTool):
     
-    #Helper Constants
-    CLASS_NAME = "Prefixes"
-    TOOL_HELPER_TEXT = {"set_prefix_defaults":"Reset prefixes to their default values.", "set_prefix":"Replace a prefix name. Arguments: prefix (string), replace (string)"}
+    HELPER_TEXT = {"set_prefix_defaults":"Reset prefixes to their default values.", "set_prefix":"Replace a prefix name.\nArguments:\n - prefix (required, string to use as replacement.)\n - replace (required, " \
+    "string of prefix type to replace.)"}
     
-    #Tool Constants
-    RIG_PREFIX_DEFAULTS = {"skin": "skin_", "rig": "rig_", "fk": "fk_", "ik": "ik_", "ctrl": "ctrl_", "grp": "grp_"}
+    RIG_PREFIX_DEFAULTS = {"skin":"skin_", "rig":"rig_", "fk":"fk_", "ik":"ik_", "ctrl":"ctrl_", "grp":"grp_", "locator":"loc_"}
 
-    #Methods
+    #Class Methods
     @classmethod
     def set_prefix_defaults(*args):
-        rig_prefixes = Prefixes.RIG_PREFIX_DEFAULTS
+        Prefixes.rig_prefixes = Prefixes.RIG_PREFIX_DEFAULTS
         
     @classmethod
     def set_prefix(*args, prefix="", replace=""):
         if prefix == "":
-            KayKitTool.helper()
+            KayKitTool.helper("set_prefix")
         elif replace == "":
-            KayKitTool.helper()
+            KayKitTool.helper("set_prefix")
         else:
-            global rig_prefixes
+            #global rig_prefixes
             if rig_prefixes.get(prefix) != None:
                 rig_prefixes[prefix] = replace
             else:
@@ -193,6 +212,9 @@ class Prefixes(KayKitTool):
                 
 # -------------------------------------------------------- 
 class ColourControl(KayKitTool):
+    
+    HELPER_TEXT = {"paint_joints":"Can recolour joints given an index and a specific selection.", "paint_controls":"Can recolour controls given an index and a specific " \
+    "selection.", "auto_paint_joints":"Automatically recolour joints by sidedness.\nArguments:\n - skip_phrase_list (optional, a list object containing all phrases that qualify a joint for skipping the auto paint process"}
     
     @classmethod
     def paint_joints():
@@ -232,6 +254,8 @@ class ColourControl(KayKitTool):
                 
 # --------------------------------------------------------        
 class Weaver(KayKitTool):
+    
+    HELPER_TEXT = {"weave":"Weaves the selected objects into a standard hierarchy.", "unweave":"All selected objects are reparented to the scene world, removing them from any hierarchy."}
     
     @classmethod
     def weave(*args):
@@ -300,18 +324,22 @@ class Weaver(KayKitTool):
             
         return
         
-# --------------------------------------------------------  
-def locator(replace=False):
-    selection = return_selection()
+# --------------------------------------------------------
+class Locator(KayKitTool):
     
-    if selection:
-        for object in selection:
-            
-            new_locator = cmds.spaceLocator(name=f"loc_{object}")
-            cmds.matchTransform(new_locator, object)
+    HELPER_TEXT = {"place_locator":"Given a selection, places a locator at each selection.\nArguments:\n - replace (optional, default=False, a boolean that determines if the selected objects are deleted when a locator is placed."}
+
+    def place_locator(replace=False):
+        selection = SelectUtility.return_selection()
         
-            if replace == True:
-                cmds.delete(object)
+        if selection:
+            for object in selection:
+                
+                new_locator = cmds.spaceLocator(name=f"{Prefixes.rig_prefixes.get('locator')}{object}")
+                cmds.matchTransform(new_locator, object)
+            
+                if replace == True:
+                    cmds.delete(object)
                 
 # --------------------------------------------------------  
 def define_skeletal_system(type="None"):
@@ -340,7 +368,7 @@ def define_skeletal_system(type="None"):
     return
     
 # --------------------------------------------------------  
-def bind_skin_to_rig(input_skin_system="None", skin_prefix = rig_prefixes.get("skin"), rig_prefix = rig_prefixes.get("rig")):
+#def bind_skin_to_rig(input_skin_system="None", skin_prefix = rig_prefixes.get("skin"), rig_prefix = rig_prefixes.get("rig")):
 
     def get_skin_system():
         print("Here")
@@ -400,9 +428,9 @@ def twist_joint(end_joint="", start_joint="", auto_weight=True, no_propogation=F
     
 # --------------------------------------------------------  
 
-# Default
-Prefixes.set_prefix_defaults()    
+Prefixes.set_prefix_defaults()  
 
 # Development Only
 if __name__ == "__main__":
     pass
+    
