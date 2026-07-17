@@ -1,6 +1,6 @@
 # KayKit 26 - by Kieran Morley
 
-KAYKIT_VERSION = "KayKit26.indev.1607-01"
+KAYKIT_VERSION = "KayKit26.indev.1707-01"
 
 import maya.cmds as cmds
 import maya.OpenMaya as om
