@@ -1,6 +1,6 @@
 # KayKit 26 - by Kieran Morley
 
-KAYKIT_VERSION = "KayKit26.indev.1707-01"
+KAYKIT_VERSION = "KayKit26.indev.1907-01"
 
 import maya.cmds as cmds
 import maya.OpenMaya as om
@@ -33,8 +33,39 @@ class KayKitTool(object):
                  
 # --------------------------------------------------------
 
-# Available classes and functions
+# Available classes/methods
 
+# --------------------------------------------------------
+class Prefixes(KayKitTool):
+    # Constants
+    HELPER_TEXT = {"set_prefix_defaults":"Reset prefixes to their default values.", "set_prefix":"Replace a prefix name.\nArguments:\n - prefix (required, string to use as replacement.)\n - replace (required, " \
+    "string of prefix type to replace.)"}
+    
+    RIG_PREFIX_DEFAULTS = {"skin":"skin_", "rig":"rig_", "fk":"fk_", "ik":"ik_", "ctrl":"ctrl_", "grp":"grp_", "locator":"loc_"}
+    # Vars
+    rig_prefixes = RIG_PREFIX_DEFAULTS
+
+    @classmethod
+    def set_prefix_defaults(*args):
+        Prefixes.rig_prefixes = Prefixes.RIG_PREFIX_DEFAULTS
+        
+    @classmethod
+    def set_prefix(self, prefix="", replace=""):
+        print(f"{self}, {prefix}, {replace}")
+        if prefix == "":
+            print("Prefix replacement string is invalid.")
+            Prefixes.helper("set_prefix")
+        elif replace == "":
+            print("Replace not recognised, valid types: skin, rig, fk, ik, ctrl, grp, locator")
+            Prefixes.helper("set_prefix")
+        else:
+            if Prefixes.rig_prefixes.get(replace) != None:
+                Prefixes.rig_prefixes[replace] = prefix
+            else:
+                om.MGlobal.displayError("Prefix reassignment failed, incorrect prefix type or replace data type?")
+                
+Prefixes.set_prefix_defaults()
+                
 # --------------------------------------------------------
 class SelectUtility(KayKitTool):
     
@@ -75,15 +106,16 @@ class SelectUtility(KayKitTool):
         
         for entry in list_to_filter:
             if preferred_phrase in entry:
-                pass
-            else:
                 filtered_list.append(entry)
+            else:
+                pass
         
         # Return the filtered list                        
         return filtered_list
     
     @classmethod
-    def get_relatives(self, selection):
+    def get_relatives(self, selection, hierarchy_depth):
+        
         all_relatives = [] 
         all_shapes = []
         shapes_found = []
@@ -105,8 +137,9 @@ class SelectUtility(KayKitTool):
                 relatives = cmds.listRelatives(object, ad=True)[:hierarchy_depth]
                     
                 direct_relatives = cmds.listRelatives(object, s=True) 
-                for relative in direct_relatives:
-                        all_shapes.append(relative)
+                if direct_relatives:
+                    for relative in direct_relatives:
+                            all_shapes.append(relative)
                     
                 if relatives:
                     for entry in relatives:
@@ -137,7 +170,7 @@ class SelectUtility(KayKitTool):
         return all_relatives   
         
     @classmethod
-    def return_selection(self, type="", all_descendents=False, hierarchy_depth=512, prefer_phrase="", print_return=False):
+    def return_selection(self, type="", all_descendents=False, hierarchy_depth=512, preferred_phrase="", print_return=False):
         
         final_selection = []
     
@@ -159,7 +192,7 @@ class SelectUtility(KayKitTool):
     
         if all_descendents:
             
-            relatives = SelectUtility.get_relatives(selection)
+            relatives = SelectUtility.get_relatives(selection, hierarchy_depth)
                    
             if relatives:
                 final_selection = selection + relatives   
@@ -177,7 +210,7 @@ class SelectUtility(KayKitTool):
                     final_selection.remove(elem)  
           
         # Phrase filter
-        final_selection = SelectUtility.phrase_filter(final_selection, prefer_phrase)        
+        final_selection = SelectUtility.phrase_filter(final_selection, preferred_phrase)        
     
         # Returns the final selection 
         if print_return:
@@ -185,32 +218,6 @@ class SelectUtility(KayKitTool):
         return final_selection
 
 # --------------------------------------------------------
-class Prefixes(KayKitTool):
-    
-    HELPER_TEXT = {"set_prefix_defaults":"Reset prefixes to their default values.", "set_prefix":"Replace a prefix name.\nArguments:\n - prefix (required, string to use as replacement.)\n - replace (required, " \
-    "string of prefix type to replace.)"}
-    
-    RIG_PREFIX_DEFAULTS = {"skin":"skin_", "rig":"rig_", "fk":"fk_", "ik":"ik_", "ctrl":"ctrl_", "grp":"grp_", "locator":"loc_"}
-
-    #Class Methods
-    @classmethod
-    def set_prefix_defaults(*args):
-        Prefixes.rig_prefixes = Prefixes.RIG_PREFIX_DEFAULTS
-        
-    @classmethod
-    def set_prefix(*args, prefix="", replace=""):
-        if prefix == "":
-            KayKitTool.helper("set_prefix")
-        elif replace == "":
-            KayKitTool.helper("set_prefix")
-        else:
-            #global rig_prefixes
-            if rig_prefixes.get(prefix) != None:
-                rig_prefixes[prefix] = replace
-            else:
-                om.MGlobal.displayError("Prefix reassignment failed, incorrect prefix type or replace data type?")
-                
-# -------------------------------------------------------- 
 class ColourControl(KayKitTool):
     
     HELPER_TEXT = {"paint_joints":"Can recolour joints given an index and a specific selection.", "paint_controls":"Can recolour controls given an index and a specific " \
@@ -327,7 +334,8 @@ class Weaver(KayKitTool):
 # --------------------------------------------------------
 class Locator(KayKitTool):
     
-    HELPER_TEXT = {"place_locator":"Given a selection, places a locator at each selection.\nArguments:\n - replace (optional, default=False, a boolean that determines if the selected objects are deleted when a locator is placed."}
+    HELPER_TEXT = {"place_locator":"Given a selection, places a locator at each selection.\nArguments:\n - replace (optional, default=False, a boolean that determines if " \
+                  "the selected objects are deleted when a locator is placed."}
 
     def place_locator(replace=False):
         selection = SelectUtility.return_selection()
@@ -341,61 +349,41 @@ class Locator(KayKitTool):
                 if replace == True:
                     cmds.delete(object)
                 
-# --------------------------------------------------------  
-def define_skeletal_system(type="None"):
-    # No User Input
-
-    if type == "None":
-        kay_help("define_skeletal_system")
-        return
-
-    # User Selected Type To Define
-
-    sk_skin_system = []
-    sk_rig_system = []
-
-    if type == "skin":
-        root = cmds.ls(n=f"{skin_prefix}_root")[0]
-        sk_skin_system = [root] + cmds.listrelatives(type="joint", ad=True)
-
-    elif Type == "rig":
-        root = cmds.ls(n=f"{rig_prefix}_root")[0]
-        sk_rig_system = [root] + cmds.listrelatives(type="joint", ad=True)
-
-    else:
-        om.MGlobalDisplayError("Invalid type of skeletal system specified for definition. Valid types: 'skin', 'rig'")
-
-    return
+# --------------------------------------------------------
+class Bind(KayKitTool):
     
-# --------------------------------------------------------  
-#def bind_skin_to_rig(input_skin_system="None", skin_prefix = rig_prefixes.get("skin"), rig_prefix = rig_prefixes.get("rig")):
+    HELPER_TEXT = {"get_skin_system":"Return a list of all joints that have the skin prefix and are joint type, including all descendents.", "build_rig_system":"Given a list " \
+                  "of skin joints, constructs and binds a rig system to match.", "skin_to_rig":"Combines two methods to act as a convenient way to build a rig system layer."}
 
-    def get_skin_system():
-        print("Here")
-        joint_selection = return_selection(type="joint", all_descendents=True, print_return=True)
+    @classmethod    
+    def get_skin_system(self):
+        joint_selection = SelectUtility.return_selection(type="joint", all_descendents=True, preferred_phrase=rig_prefixes.get("skin"))
+        
         if joint_selection == []:
             om.MGlobal.displayError("No joints selected")
             return []
+            
         return joint_selection
-
-    def create_rig_system(skin_system):
-        if skin_system != True:
+        
+    @classmethod    
+    def build_rig_system(self, skin_system):
+        rig_system = []
+        
+        if skin_system == "None":
             om.MGlobal.displayError("No valid skin system selected, select a root joint for a skin system.")
             return()
         else:
             duplicate_skin_system = cmds.duplicate(skin_system, st=True, rc=True)
-            print(duplicate_skin_system)
             rig_system = []
 
         # Generates a list of names for the rig system
         for name in (skin_system):
-            rig_name = name.replace(skin_prefix, rig_prefix)
+            rig_name = name.replace(Prefixes.rig_prefixes["skin"], Prefixes.rig_prefixes["rig"])
             rig_system.append(rig_name)
 
         # Renames the duplicated joints to the list of new desired names
         for name in (duplicate_skin_system):
             rig_name = rig_system[duplicate_skin_system.index(name)]
-            print(rig_name)
             cmds.rename(name, rig_name)
 
         # Sets up parent constraints between rig and skin joint systems
@@ -404,31 +392,35 @@ def define_skeletal_system(type="None"):
 
         # Clear the user selection
         cmds.select(clear=True)
-
-    if input_skin_system == "None":
-        skin_system = get_skin_system()
-    else:
-        skin_system = input_skin_system
-
-    if skin_system == False:
-        print("No valid input")
-    else:
-        create_rig_system(skin_system)
-
-# --------------------------------------------------------  
-def twist_joint(end_joint="", start_joint="", auto_weight=True, no_propogation=False):
-    if return_selection() == []:
         pass
-
-    if end_joint == "":
+        
+    @classmethod
+    def skin_to_rig(self, input_skin_system="None", skin_prefix=Prefixes.rig_prefixes.get("skin"), rig_prefix=rig_prefixes.get("rig")):
+        if input_skin_system == "None":
+            skin_system = Bind.get_skin_system()
+        else:
+            skin_system = input_skin_system
+    
+        if skin_system == False:
+            print("No valid input")
+        else:
+            Bind.build_rig_system(skin_system)
+        
+# --------------------------------------------------------
+class Twister(KayKitTool):
+    
+    HELPER_TEXT = {"insert_joint":"Work in progress."}
+    
+    def insert_joint(end_joint="", start_joint="", auto_weight=True, no_propogation=False):
+        if SelectUtility.return_selection() == ():
+            pass
+        if end_joint == "":
+            pass
+            
+        SelectUtility.return_selection(type="joint")
         pass
-
-    return_selection(type="joint")
-    pass
     
 # --------------------------------------------------------  
-
-Prefixes.set_prefix_defaults()  
 
 # Development Only
 if __name__ == "__main__":
