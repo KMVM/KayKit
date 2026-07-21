@@ -250,6 +250,7 @@ class ColourControl(KayKitTool):
                     if phrase in jnt:
                         skip = True
                         break
+                        
                 if skip == True:
                     continue 
                 if contains_left:
@@ -356,55 +357,61 @@ class Bind(KayKitTool):
                   "of skin joints, constructs and binds a rig system to match.", "skin_to_rig":"Combines two methods to act as a convenient way to build a rig system layer."}
 
     @classmethod    
-    def get_skin_system(self):
-        joint_selection = SelectUtility.return_selection(type="joint", all_descendents=True, preferred_phrase=rig_prefixes.get("skin"))
+    def get_joint_system(self, system_type="skin"):
+        system_prefix_phrase = Prefixes.rig_prefixes.get(system_type)
+        try:
+            joint_selection = SelectUtility.return_selection(type="joint", all_descendents=True, preferred_phrase=Prefixes.rig_prefixes.get("skin"))
+        except: 
+            om.MGlobal.displayError(f"Invalid system type specified: {system_type}")
+            return []
+            
         
         if joint_selection == []:
             om.MGlobal.displayError("No joints selected")
             return []
             
         return joint_selection
-        
+    
     @classmethod    
-    def build_rig_system(self, skin_system):
-        rig_system = []
-        
-        if skin_system == "None":
-            om.MGlobal.displayError("No valid skin system selected, select a root joint for a skin system.")
-            return()
-        else:
-            duplicate_skin_system = cmds.duplicate(skin_system, st=True, rc=True)
-            rig_system = []
+    def build_joint_system(self, template_system, template_type="skin", target_type="rig"):
 
-        # Generates a list of names for the rig system
-        for name in (skin_system):
-            rig_name = name.replace(Prefixes.rig_prefixes["skin"], Prefixes.rig_prefixes["rig"])
-            rig_system.append(rig_name)
+        target_system = []
+        
+        if template_system == "None":
+            om.MGlobal.displayError("No valid template system provided.")
+            return
+        else:
+            duplicate_system = cmds.duplicate(template_system, st=True, rc=True)
+
+        # Generates a list of names for the target system
+        for name in (template_system):
+            target_name = name.replace(Prefixes.rig_prefixes[template_type], Prefixes.rig_prefixes[target_type])
+            target_system.append(target_name)
 
         # Renames the duplicated joints to the list of new desired names
-        for name in (duplicate_skin_system):
-            rig_name = rig_system[duplicate_skin_system.index(name)]
-            cmds.rename(name, rig_name)
+        for name in (duplicate_system):
+            target_name = target_system[duplicate_system.index(name)]
+            cmds.rename(name, target_name)
 
-        # Sets up parent constraints between rig and skin joint systems
-        for parent_joint in rig_system:
-            cmds.parentConstraint(parent_joint, skin_system[rig_system.index(parent_joint)])
+        # Sets up parent constraints between target and template joint systems
+        for parent_joint in target_system:
+            cmds.parentConstraint(parent_joint, template_system[target_system.index(parent_joint)])
 
         # Clear the user selection
         cmds.select(clear=True)
         pass
-        
+            
     @classmethod
-    def skin_to_rig(self, input_skin_system="None", skin_prefix=Prefixes.rig_prefixes.get("skin"), rig_prefix=rig_prefixes.get("rig")):
+    def skin_to_rig(self, input_skin_system="None", skin_prefix=Prefixes.rig_prefixes.get("skin"), rig_prefix=Prefixes.rig_prefixes.get("rig")):
         if input_skin_system == "None":
-            skin_system = Bind.get_skin_system()
+            skin_system = Bind.get_joint_system(system_type="skin")
         else:
             skin_system = input_skin_system
     
         if skin_system == False:
             print("No valid input")
         else:
-            Bind.build_rig_system(skin_system)
+            Bind.build_joint_system(skin_system)
         
 # --------------------------------------------------------
 class Twister(KayKitTool):
